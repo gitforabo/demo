@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,9 +26,7 @@ public class ReservationController {  // контроллер, который о
     } // это называется Dependency Injection (DI).
 
     @GetMapping("/{id}") // — метод срабатывает на GET (например: http://localhost:8080/reservations/1)
-    public Reservation getReservationById(
-        @PathVariable("id") Long id           // @PathVariable("id") → извлекает параметры из URL (id);
-    ) {
+    public Reservation getReservationById(@PathVariable("id") Long id) { // @PathVariable("id") → извлекает параметры из URL (id)
         log.info("Called getReservationById id = " + id);
         return reservationService.getReservationById(id); 
     }       // возвращает объект Reservation → Spring автоматически превращает его в JSON.
@@ -36,5 +36,11 @@ public class ReservationController {  // контроллер, который о
         log.info("Called getReservations:");
         return reservationService.findAllReservation(); 
     } 
+
+    @PostMapping()
+    public Reservation createReservation(@RequestBody Reservation reservationToCreate) {
+        log.info("Called createReservation");
+        return reservationService.createReservation(reservationToCreate);
+    }
 }
    
