@@ -14,7 +14,10 @@ public class ReservationService { // Это сервис, который отв�
   // Map.of(1L, new Reservation(1L, 14L, 33L, LocalDate.now(), LocalDate.now().plusDays(5), ReservationStatus.PENDING));
     private final AtomicLong isCounter;
 
-    public ReservationService() {
+    private final ReservationRepository repository;
+
+    public ReservationService(ReservationRepository repository) {
+        this.repository = repository;
         this.reservationMap = new HashMap<>();
         this.isCounter = new AtomicLong();
     }
@@ -27,7 +30,20 @@ public class ReservationService { // Это сервис, который отв�
     }
 
     public List<Reservation> findAllReservation() {
-       return reservationMap.values().stream().toList();
+        List<ReservationEntity> allEntities = repository.findAll();
+        return allEntities.stream()
+            .map(it -> 
+                new Reservation(
+                    it.getId(),
+                    it.getUserId(),
+                    it.getRoomId(),
+                    it.getStartDate(),
+                    it.getEndDate(),
+                    it.getStatus()
+                )
+            ).toList();
+
+        //return reservationMap.values().stream().toList();
     }
 
     public Reservation createReservation(Reservation reservationToCreate) {
