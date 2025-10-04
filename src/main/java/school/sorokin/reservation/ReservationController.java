@@ -1,9 +1,13 @@
 package school.sorokin.reservation;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,22 +29,59 @@ public class ReservationController {  // контроллер, который о
         this.reservationService = reservationService; // Spring автоматически подставит (инжектит) объект ReservationService.
     } // это называется Dependency Injection (DI).
 
+    // ------ GET reservation by id ------
     @GetMapping("/{id}") // — метод срабатывает на GET (например: http://localhost:8080/reservations/1)
-    public Reservation getReservationById(@PathVariable("id") Long id) { // @PathVariable("id") → извлекает параметры из URL (id)
+    public ResponseEntity<Reservation> getReservationById(
+            @PathVariable("id") Long id  // @PathVariable("id") → извлекает параметры из URL (id)
+    ) { 
         log.info("Called getReservationById id = " + id);
-        return reservationService.getReservationById(id); 
-    }       // возвращает объект Reservation → Spring автоматически превращает его в JSON.
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(reservationService.getReservationById(id));
+    }      // возвращает объект Reservation → Spring автоматически превращает его в JSON.
 
+    // ------ GET ALL reservations ------
     @GetMapping() // — метод срабатывает на GET (например: http://localhost:8080/reservations/1)
-    public List<Reservation> getReservations() {
-        log.info("Called getReservations:");
-        return reservationService.findAllReservation(); 
+    public ResponseEntity<List<Reservation>> getAllReservations() {
+        log.info("Called getAllReservations");
+        return ResponseEntity.ok(reservationService.findAllReservation());
     } 
 
+    // ------ CREATE reservation ------
     @PostMapping()
-    public Reservation createReservation(@RequestBody Reservation reservationToCreate) {
+    public ResponseEntity<Reservation> createReservation(
+            @RequestBody Reservation reservationToCreate
+    ) {
         log.info("Called createReservation");
-        return reservationService.createReservation(reservationToCreate);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header("test-header", "123")
+                .body(reservationService.createReservation(reservationToCreate));
     }
+
+    // ------ UPDATE reservation ------
+    @PostMapping("/{id}")
+    public ResponseEntity<Reservation> updateReservation(
+            @PathVariable("id") Long id, 
+            @RequestBody Reservation reservationToUpdate
+    ) {
+        log.info("Called updateReservation id = {}, reservationToUpdate = {}",
+                id, reservationToUpdate);
+        var updated = reservationService.updateReservation(id, reservationToUpdate);
+        return ResponseEntity.ok(updated);
+    }
+
+    // ------ DELETE reservation ------
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteReservation(
+            @PathVariable("id") Long id
+    ) {
+        log.info("Called deleteReservation id = {}", id);
+        try {
+            reservationService.deleteReservation(id);
+        return ResponseEntity.ok().build();
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).build();
+        }
+    }
+    
 }
    

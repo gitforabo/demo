@@ -1,6 +1,7 @@
 package school.sorokin.reservation;
 
 import java.time.LocalDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -30,7 +31,7 @@ public class ReservationEntity {
     
     @Column(name = "end_date")
     private LocalDate endDate;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private ReservationStatus status;
@@ -39,7 +40,8 @@ public class ReservationEntity {
     public ReservationEntity() {}
 
     // Конструктор со всеми полями (кроме id, так как оно генерируется)
-    public ReservationEntity(Long userId, Long roomId, LocalDate startDate, LocalDate endDate, ReservationStatus status) {
+    public ReservationEntity(Long id, Long userId, Long roomId, LocalDate startDate, LocalDate endDate, ReservationStatus status) {
+        this.id = id;
         this.userId = userId;
         this.roomId = roomId;
         this.startDate = startDate;
