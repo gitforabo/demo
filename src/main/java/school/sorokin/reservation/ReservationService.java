@@ -1,17 +1,22 @@
 package school.sorokin.reservation;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 
 @Service
 public class ReservationService { // Это сервис, который отвечает за бизнес-логику.
 
+    private static final Logger log = LoggerFactory.getLogger(ReservationService.class);
+
     private final ReservationRepository repository;
 
     public ReservationService(ReservationRepository repository) {
-        this.repository = repository;
+        this.repository = repository; // DI
     }
 
     // ------ GET reservation by id------
@@ -79,16 +84,23 @@ public class ReservationService { // Это сервис, который отв�
     }
 
     // ------ DELETE reservation ------
-    public void deleteReservation(Long id) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Not found reservation by id = " + id);
-        }
+   @Transactional
+    public void cancelReservation(Long id) {
+        var reservation = repository.findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
 
-        repository.deleteById(id);
+        if (reservation.getStatus().equals(ReservationStatus.APPROVED)) {
+            throw new IllegalStateException("Cannot cancel approved reservation. Contact with manager please");
+        }
+        if (reservation.getStatus().equals(ReservationStatus.CANCELLED)) {
+            throw new IllegalStateException("Cannot cancel the reservation. Reservation was already cancelled");
+        }
+        repository.setStatus(id, ReservationStatus.CANCELLED);
+        log.info("Successfully cancelled reservation: id={}", id);
     }
 
     // ------ APPROVE reservation ------
-    public Reservation approvedReservation(Long id) {
+    public Reservation approveReservation(Long id) {
         var reservationEntity = repository.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
 

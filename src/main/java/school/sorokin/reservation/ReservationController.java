@@ -1,7 +1,6 @@
 package school.sorokin.reservation;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,18 +69,34 @@ public class ReservationController {  // контроллер, который о
     }
 
     // ------ DELETE reservation ------
-    @DeleteMapping("/{id}")
+     @DeleteMapping("/{id}/cancel")
     public ResponseEntity<Void> deleteReservation(
             @PathVariable("id") Long id
     ) {
-        log.info("Called deleteReservation id = {}", id);
-        try {
-            reservationService.deleteReservation(id);
-        return ResponseEntity.ok().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(404).build();
-        }
+        log.info("Called deleteReservation: id={}", id);
+        reservationService.cancelReservation(id);
+        return ResponseEntity.ok()
+                    .build();
     }
-    
+
+    // ------ APPROVE reservation ------
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<Reservation> approveReservation(
+            @PathVariable("id") Long id
+    ) {
+        log.info("Called approveReservation: id={}", id);
+        var reservation = reservationService.approveReservation(id);
+        return ResponseEntity.ok(reservation);
+    }
 }
+
+// CRUD
+// post create: http://localhost:8081/reservations
+//  {
+//     "userId": 8,
+//     "roomId": 7,
+//     "startDate": "2025-09-20",
+//     "endDate": "2025-09-29"
+//  }
+// get getAll: http://localhost:8081/reservations
    
