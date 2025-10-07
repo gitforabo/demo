@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 // REST API для получения бронирования по id.
 @RestController  // — говорит Spring, что этот класс принимает запросы от пользователя и возвращает JSON
 @RequestMapping("/reservations") // базовый путь, все URL начинаются с /reservations
@@ -48,7 +50,7 @@ public class ReservationController {  // контроллер, который о
     // ------ CREATE reservation ------
     @PostMapping()
     public ResponseEntity<Reservation> createReservation(
-            @RequestBody Reservation reservationToCreate
+            @RequestBody @Valid Reservation reservationToCreate
     ) {
         log.info("Called createReservation");
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -60,7 +62,7 @@ public class ReservationController {  // контроллер, который о
     @PostMapping("/{id}")
     public ResponseEntity<Reservation> updateReservation(
             @PathVariable("id") Long id, 
-            @RequestBody Reservation reservationToUpdate
+            @RequestBody @Valid Reservation reservationToUpdate
     ) {
         log.info("Called updateReservation id = {}, reservationToUpdate = {}",
                 id, reservationToUpdate);

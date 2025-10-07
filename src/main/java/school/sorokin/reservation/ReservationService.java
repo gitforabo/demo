@@ -38,12 +38,13 @@ public class ReservationService { // Это сервис, который отв�
     // ------ CREATE reservation ------
     public Reservation createReservation(Reservation reservationToCreate) {
 
-        if(reservationToCreate.id() != null) {
-            throw new IllegalArgumentException("Id shoud be empty");
-        }
         if(reservationToCreate.status() != null) {
             throw new IllegalArgumentException("Status shoud be empty");
         }
+        if (reservationToCreate.endDate().isAfter(reservationToCreate.startDate())) {
+            throw new IllegalArgumentException("Start date must be 1 day erlier than end date");
+        }
+
 
         var entityToSave = new ReservationEntity(
                   null,
@@ -68,6 +69,9 @@ public class ReservationService { // Это сервис, который отв�
         
         if (reservationEntity.getStatus() != ReservationStatus.PENDING) {
             throw new IllegalStateException("Cannot modify reservatoion: status = " + reservationEntity);
+        }
+        if (reservationToUpdate.endDate().isAfter(reservationToUpdate.startDate())) {
+            throw new IllegalArgumentException("Start date must be 1 day erlier than end date");
         }
 
         var reservationToSave = new ReservationEntity(
