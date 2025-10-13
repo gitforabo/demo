@@ -1,4 +1,4 @@
-package school.sorokin.reservation;
+package school.sorokin.reservation.reservations;
 
 import java.util.List;
 
@@ -12,13 +12,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 
 // REST API для получения бронирования по id.
 @RestController  // — говорит Spring, что этот класс принимает запросы от пользователя и возвращает JSON
-@RequestMapping("/reservations") // базовый путь, все URL начинаются с /reservations
+@RequestMapping("/reservation") // базовый путь, все URL начинаются с /reservations
 public class ReservationController {  // контроллер, который обрабатывает HTTP-запросы.
     
     private static final Logger log = LoggerFactory.getLogger(RestController.class);
@@ -42,9 +43,16 @@ public class ReservationController {  // контроллер, который о
 
     // ------ GET ALL reservations ------
     @GetMapping() // — метод срабатывает на GET (например: http://localhost:8080/reservations/1)
-    public ResponseEntity<List<Reservation>> getAllReservations() {
+    public ResponseEntity<List<Reservation>> getAllReservations(
+        @RequestParam("roomId") Long roomId,
+        @RequestParam("userId") Long userId,
+        @RequestParam("pageSize") Integer pageSize,
+        @RequestParam("pageNumber") Integer pageNumber
+    ) {
         log.info("Called getAllReservations");
-        return ResponseEntity.ok(reservationService.findAllReservation());
+        var filter = new ReservationSearchFilter(roomId, userId, pageSize, pageNumber);
+        
+        return ResponseEntity.ok(reservationService.searchAllByFilter(filter));
     } 
 
     // ------ CREATE reservation ------

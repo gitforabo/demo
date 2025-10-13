@@ -1,14 +1,14 @@
-package school.sorokin.reservation;
+package school.sorokin.reservation.reservations;
 import java.time.LocalDate;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import school.sorokin.reservation.reservations.ReservationMapper;
 
 @Service
 public class ReservationService { // Это сервис, который отвечает за бизнес-логику.
@@ -35,10 +35,21 @@ public class ReservationService { // Это сервис, который отв�
     }
 
     // ------ GET ALL reservations ------
-    public List<Reservation> findAllReservation() {
-        List<ReservationEntity> allEntities = repository.findAll();
-        return allEntities.stream()
-            .map(this::mapper.toDomain()).toList();
+    public List<Reservation> searchAllByFilter(
+        ReservationSearchFilter filter
+    ) {
+        int pageSize = filter.pageSize() != null ? filter.pageSize() : 10;
+        int pageNumber = filter.pageNumber() != null ? filter.pageNumber() : 0;
+
+        var pageable = Pageable.ofSize(pageSize).withPage(pageNumber);
+
+        List<ReservationEntity> allEntities = repository.searchByFilter(
+            filter.roomId(), 
+            filter.userId(), 
+            pageable
+        );
+
+        return allEntities.stream().map(mapper::toDomain).toList();
         //return reservationMap.values().stream().toList();
     } // .map(it -> toDomainReservation(it)).toList();
 
@@ -52,17 +63,18 @@ public class ReservationService { // Это сервис, который отв�
             throw new IllegalArgumentException("Start date must be 1 day erlier than end date");
         }
 
-
-        var entityToSave = new ReservationEntity(
-                  null,
-                    reservationToCreate.userId(),
-                    reservationToCreate.roomId(), 
-                    reservationToCreate.startDate(), 
-                    reservationToCreate.endDate(), 
-                    ReservationStatus.PENDING);
+        // var entityToSave = new ReservationEntity(
+        //           null,
+        //             reservationToCreate.userId(),
+        //             reservationToCreate.roomId(), 
+        //             reservationToCreate.startDate(), 
+        //             reservationToCreate.endDate(), 
+        //             ReservationStatus.PENDING);
+        var entityToSave = mapper.toEntity(reservationToCreate);
+        entityToSave.setStatus(ReservationStatus.PENDING);
 
         ReservationEntity savedEntity = repository.save(entityToSave);
-        return toDomainReservation(savedEntity);            
+        return mapper.toDomain(savedEntity);            
     }
 
     // ------ UPDATE reservation ------
@@ -81,17 +93,12 @@ public class ReservationService { // Это сервис, который отв�
             throw new IllegalArgumentException("Start date must be 1 day erlier than end date");
         }
 
-        var reservationToSave = new ReservationEntity(
-                    reservationEntity.getId(),
-                    reservationToUpdate.userId(),
-                    reservationToUpdate.roomId(),
-                    reservationToUpdate.startDate(),
-                    reservationToUpdate.endDate(),
-                    ReservationStatus.PENDING
-        );
+        var reservationToSave = mapper.toEntity(reservationToUpdate);
+        reservationToSave.setId(reservationEntity.getId());
+        reservationToSave.setStatus(ReservationStatus.PENDING);
 
         var updatedReservation = repository.save(reservationToSave);
-        return toDomainReservation(updatedReservation);
+        return mapper.toDomain(updatedReservation);
     }
 
     // ------ DELETE reservation ------
@@ -132,7 +139,7 @@ public class ReservationService { // Это сервис, который отв�
         reservationEntity.setStatus(ReservationStatus.APPROVED);
         repository.save(reservationEntity);
 
-        return toDomainReservation(reservationEntity);
+        return mapper.toDomain(reservationEntity);
     }
 
 
@@ -153,6 +160,5 @@ public class ReservationService { // Это сервис, который отв�
         log.info("Conflicting with: ids = {}", conflictingIds);
         return true;
     }
-
-    
 }
+// ?userId=1&roomId=7&pageSize=5&pageNumber=0

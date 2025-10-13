@@ -1,8 +1,9 @@
-package school.sorokin.reservation;
+package school.sorokin.reservation.reservations;
 
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -62,6 +63,19 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("status") ReservationStatus status
+    );
+// r.roomId - сущность ReservationEntity. это поле в таблице (в базе данных)
+// :roomId - аргумент метода (@Param("roomId")). это значение, переданное в метод
+
+    @Query("""
+       SELECT r.id from ReservationEntity r
+            WHERE r.roomId = :roomId
+            AND r.userId = :userId
+       """)
+    List<ReservationEntity> searchByFilter(
+        @Param("roomId") Long roomId,
+        @Param("userId") Long userId,
+        Pageable pageable
     );
 
     // @Query("""
