@@ -1,5 +1,8 @@
 package school.sorokin.reservation.reservations;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class ReservationMapper {
 
     public Reservation toDomain(ReservationEntity reservationEntity) {

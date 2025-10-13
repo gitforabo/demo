@@ -50,8 +50,7 @@ public class ReservationService { // Это сервис, который отв�
         );
 
         return allEntities.stream().map(mapper::toDomain).toList();
-        //return reservationMap.values().stream().toList();
-    } // .map(it -> toDomainReservation(it)).toList();
+    } 
 
     // ------ CREATE reservation ------
     public Reservation createReservation(Reservation reservationToCreate) {
@@ -59,17 +58,10 @@ public class ReservationService { // Это сервис, который отв�
         if(reservationToCreate.status() != null) {
             throw new IllegalArgumentException("Status shoud be empty");
         }
-        if (reservationToCreate.endDate().isAfter(reservationToCreate.startDate())) {
+        if (!reservationToCreate.endDate().isAfter(reservationToCreate.startDate())) {
             throw new IllegalArgumentException("Start date must be 1 day erlier than end date");
         }
 
-        // var entityToSave = new ReservationEntity(
-        //           null,
-        //             reservationToCreate.userId(),
-        //             reservationToCreate.roomId(), 
-        //             reservationToCreate.startDate(), 
-        //             reservationToCreate.endDate(), 
-        //             ReservationStatus.PENDING);
         var entityToSave = mapper.toEntity(reservationToCreate);
         entityToSave.setStatus(ReservationStatus.PENDING);
 
@@ -161,4 +153,3 @@ public class ReservationService { // Это сервис, который отв�
         return true;
     }
 }
-// ?userId=1&roomId=7&pageSize=5&pageNumber=0
