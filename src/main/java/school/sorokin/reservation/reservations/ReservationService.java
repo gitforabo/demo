@@ -1,4 +1,5 @@
 package school.sorokin.reservation;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import school.sorokin.reservation.reservations.ReservationMapper;
 
 @Service
 public class ReservationService { // Это сервис, который отвечает за бизнес-логику.
@@ -14,9 +16,14 @@ public class ReservationService { // Это сервис, который отв�
     private static final Logger log = LoggerFactory.getLogger(ReservationService.class);
 
     private final ReservationRepository repository;
+    private final ReservationMapper mapper;
 
-    public ReservationService(ReservationRepository repository) {
+    public ReservationService(
+        ReservationRepository repository,
+        ReservationMapper mapper
+    ) {
         this.repository = repository; // DI
+        this.mapper = mapper;
     }
 
     // ------ GET reservation by id------
@@ -24,14 +31,14 @@ public class ReservationService { // Это сервис, который отв�
         ReservationEntity reservationEntity = repository.findById(id)
                         .orElseThrow(() -> new EntityNotFoundException(
                             "Not found reservation by id = " + id));
-        return toDomainReservation(reservationEntity);
+        return mapper.toDomain(reservationEntity);
     }
 
     // ------ GET ALL reservations ------
     public List<Reservation> findAllReservation() {
         List<ReservationEntity> allEntities = repository.findAll();
         return allEntities.stream()
-            .map(this::toDomainReservation).toList();
+            .map(this::mapper.toDomain()).toList();
         //return reservationMap.values().stream().toList();
     } // .map(it -> toDomainReservation(it)).toList();
 
@@ -112,7 +119,11 @@ public class ReservationService { // Это сервис, который отв�
             throw new IllegalStateException("Cannot approved reservatoion: status = " + reservationEntity.getStatus());
         }
 
-        var isConflict = isReservationConflict(reservationEntity);
+        var isConflict = isReservationConflict(
+                reservationEntity.getRoomId(),
+                reservationEntity.getStartDate(),
+                reservationEntity.getEndDate()
+        );
 
         if (isConflict) {
             throw new IllegalStateException("Cannot approve reservatoion because of conflict" + reservationEntity.getStatus());
@@ -125,35 +136,23 @@ public class ReservationService { // Это сервис, который отв�
     }
 
 
-    private boolean isReservationConflict(ReservationEntity reservation) {
-        var allReservations = repository.findAll();
-
-        for (ReservationEntity existingReservation : allReservations) {
-            if (reservation.getId().equals(existingReservation.getId())) {
-                continue;
-            }
-             if (!reservation.getRoomId().equals(existingReservation.getRoomId())) {
-                continue;
-            }
-            if (!existingReservation.getStatus().equals(ReservationStatus.APPROVED)) {
-                continue;
-            }
-            if (reservation.getStartDate().isBefore(existingReservation.getEndDate())
-                && existingReservation.getStartDate().isBefore(reservation.getEndDate())) {
-                    return true;
-            }
+    private boolean isReservationConflict(
+            Long roomId, 
+            LocalDate startDate, 
+            LocalDate endDate
+    ) {
+        List<Long> conflictingIds = repository.findConflictReservationIds(
+            roomId, 
+            startDate, 
+            endDate, 
+            ReservationStatus.APPROVED
+        );
+        if (conflictingIds.isEmpty()) {
+            return false;
         }
-        return false;
+        log.info("Conflicting with: ids = {}", conflictingIds);
+        return true;
     }
 
-    private Reservation toDomainReservation(ReservationEntity reservation) {
-        return new Reservation(
-                    reservation.getId(),
-                    reservation.getUserId(),
-                    reservation.getRoomId(),
-                    reservation.getStartDate(),
-                    reservation.getEndDate(),
-                    reservation.getStatus()
-                );
-    }
+    
 }
