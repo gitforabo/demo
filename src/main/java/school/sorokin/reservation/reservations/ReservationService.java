@@ -1,5 +1,4 @@
 package school.sorokin.reservation.reservations;
-import java.time.LocalDate;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -9,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import school.sorokin.reservation.reservations.availability.ReservationAvailabilityService;
 
 @Service
 public class ReservationService { // Это сервис, который отвечает за бизнес-логику.
@@ -17,13 +17,16 @@ public class ReservationService { // Это сервис, который отв�
 
     private final ReservationRepository repository;
     private final ReservationMapper mapper;
+    private final ReservationAvailabilityService availabilityService;
 
     public ReservationService(
         ReservationRepository repository,
-        ReservationMapper mapper
+        ReservationMapper mapper,
+        ReservationAvailabilityService availabilityService
     ) {
         this.repository = repository; // DI
         this.mapper = mapper;
+        this.availabilityService = availabilityService;
     }
 
     // ------ GET reservation by id------
@@ -81,7 +84,7 @@ public class ReservationService { // Это сервис, который отв�
         if (reservationEntity.getStatus() != ReservationStatus.PENDING) {
             throw new IllegalStateException("Cannot modify reservatoion: status = " + reservationEntity);
         }
-        if (reservationToUpdate.endDate().isAfter(reservationToUpdate.startDate())) {
+        if (!reservationToUpdate.endDate().isAfter(reservationToUpdate.startDate())) {
             throw new IllegalArgumentException("Start date must be 1 day erlier than end date");
         }
 
@@ -118,13 +121,13 @@ public class ReservationService { // Это сервис, который отв�
             throw new IllegalStateException("Cannot approved reservatoion: status = " + reservationEntity.getStatus());
         }
 
-        var isConflict = isReservationConflict(
+        var isAvailableToApprove = availabilityService.isReservationAvailable(
                 reservationEntity.getRoomId(),
                 reservationEntity.getStartDate(),
                 reservationEntity.getEndDate()
         );
 
-        if (isConflict) {
+        if (!isAvailableToApprove) {
             throw new IllegalStateException("Cannot approve reservatoion because of conflict" + reservationEntity.getStatus());
         }
 
@@ -135,21 +138,5 @@ public class ReservationService { // Это сервис, который отв�
     }
 
 
-    private boolean isReservationConflict(
-            Long roomId, 
-            LocalDate startDate, 
-            LocalDate endDate
-    ) {
-        List<Long> conflictingIds = repository.findConflictReservationIds(
-            roomId, 
-            startDate, 
-            endDate, 
-            ReservationStatus.APPROVED
-        );
-        if (conflictingIds.isEmpty()) {
-            return false;
-        }
-        log.info("Conflicting with: ids = {}", conflictingIds);
-        return true;
-    }
+   
 }

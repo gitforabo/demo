@@ -42,12 +42,12 @@ public class ReservationController {  // контроллер, который о
     }      // возвращает объект Reservation → Spring автоматически превращает его в JSON.
 
     // ------ GET ALL reservations ------
-    @GetMapping() // — метод срабатывает на GET (например: http://localhost:8080/reservations/1)
+    @GetMapping() // — метод срабатывает на GET (например: http://localhost:8080/reservation?userId=1&roomId=7&pageSize=5&pageNumber=0)
     public ResponseEntity<List<Reservation>> getAllReservations(
-        @RequestParam("roomId") Long roomId,
-        @RequestParam("userId") Long userId,
-        @RequestParam("pageSize") Integer pageSize,
-        @RequestParam("pageNumber") Integer pageNumber
+        @RequestParam(name = "roomId", required = false) Long roomId,
+        @RequestParam(name = "userId", required = false) Long userId,
+        @RequestParam(name = "pageSize", required = false) Integer pageSize,
+        @RequestParam(name = "pageNumber", required = false) Integer pageNumber
     ) {
         log.info("Called getAllReservations");
         var filter = new ReservationSearchFilter(roomId, userId, pageSize, pageNumber);

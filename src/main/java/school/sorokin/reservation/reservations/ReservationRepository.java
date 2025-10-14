@@ -67,11 +67,6 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 // r.roomId - сущность ReservationEntity. это поле в таблице (в базе данных)
 // :roomId - аргумент метода (@Param("roomId")). это значение, переданное в метод
 
-    // @Query("""
-    //    SELECT r.id from ReservationEntity r
-    //         WHERE r.roomId = :roomId
-    //         AND r.userId = :userId
-    //    """)
      @Query("""
        SELECT r from ReservationEntity r
             WHERE (:roomId IS NULL OR r.roomId = :roomId)
@@ -82,15 +77,4 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
         @Param("userId") Long userId,
         Pageable pageable
     );
-
-    // @Query("""
-    //    SELECT r from ReservationEntity r
-    //         WHERE (:roomId IS NULL OR r.roomId = :roomId)
-    //         AND (:userId IS NULL OR r.userId = :userId)
-    //    """)
-    // List<ReservationEntity> searchAllByFilter(
-    //         @Param("roomId") Long roomId,
-    //         @Param("userId") Long userId,
-    //         Pageable pageable
-    // );
 }
