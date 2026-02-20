@@ -1,0 +1,33 @@
+version: '3.8' 
+
+services:
+  db:
+    image: postgres:15-alpine # Легкий образ Postgres на базе Alpine Linux
+    container_name: reservation-db  # Фиксированное имя контейнера (удобно для логов)
+    environment:
+      POSTGRES_DB: reservation_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rootroot
+
+    ports:
+      - "5433:5432" # Проброс портов: [Порт на Макбуке] : [Порт внутри контейнера]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Данные сохранятся, даже если удалить контейнер
+
+  app:
+    build: . # Docker ищет файл 'Dockerfile' в текущей папке для сборки образа
+    container_name: reservation-app
+    depends_on:
+      - db # Ждем запуска базы перед стартом приложения
+    ports:
+      - "8080:8080" # Внешний порт 8080 для доступа к API через браузер
+    environment:
+      # ПЕРЕОПРЕДЕЛЯЕМ настройки Spring из application.yaml для работы ВНУТРИ Docker
+      # 'db' здесь — это имя сервиса выше, Docker сам превратит его в IP-адрес
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/reservation_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: rootroot
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update # Авто-создание таблиц при старте
+
+volumes:
+  postgres_data: # Объявляем именованное хранилище для базы данных

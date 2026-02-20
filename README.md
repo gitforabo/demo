@@ -1,6 +1,6 @@
 # Система бронирования комнат
 
-Учебный REST API-проект на Spring Boot, разработанный в рамках курса школы Сорокина.  
+Учебный REST API-проект на Spring Boot, разработанный в рамках курса школы Сорокина ( https://youtu.be/KDrNL-uw3oc?si=80w4hzYaCrOvNiqp )
 Реализует полный цикл управления бронированием комнат: создание, просмотр, обновление, отмена и подтверждение.
 
 ---
@@ -137,34 +137,84 @@ Content-Type: application/json
 
 ## Запуск проекта
 
-### Требования
+Проект можно запустить двумя способами: **локально** (нужен PostgreSQL на компьютере) или **через Docker** (всё запускается автоматически).
+
+---
+
+### Вариант 1 — Локально (через Maven)
+
+#### Требования
 - Java 21+
-- PostgreSQL (запущенный экземпляр)
-- Maven
+- PostgreSQL — запущенный экземпляр с базой `JavaLearn`
+- Maven (или используй `./mvnw`)
 
-### Настройка базы данных
+#### Настройка
 
-Создайте базу данных PostgreSQL и заполните `src/main/resources/application.properties`:
+Настройки подключения к БД находятся в `src/main/resources/application.properties`:
 
 ```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/reservation_db
-spring.datasource.username=your_username
-spring.datasource.password=your_password
+spring.datasource.url=jdbc:postgresql://localhost:5432/JavaLearn
+spring.datasource.username=postgres
+spring.datasource.password=rootroot
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-### Запуск
+При необходимости измени `username`, `password` и имя базы под свой локальный PostgreSQL.
+
+#### Запуск
 
 ```bash
-# Через Maven Wrapper
 ./mvnw spring-boot:run
-
-# Или сборка и запуск JAR
-./mvnw clean package
-java -jar target/reservation-system-0.0.1-SNAPSHOT.jar
 ```
 
-Приложение запустится на порту **8080** (по умолчанию).
+Приложение запустится на **http://localhost:8080**
+
+---
+
+### Вариант 2 — Docker Compose (рекомендуется)
+
+Не нужно устанавливать PostgreSQL — всё поднимается одной командой.
+
+#### Требования
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+#### Запуск
+
+```bash
+docker-compose up --build
+```
+
+Docker автоматически:
+1. Соберёт JAR-файл приложения
+2. Поднимет контейнер с PostgreSQL (`reservation-db`)
+3. Поднимет контейнер с приложением (`reservation-app`)
+
+| Сервис | Адрес |
+|---|---|
+| API приложения | http://localhost:8080 |
+| PostgreSQL (для подключения из IDE) | `localhost:5433` |
+
+#### Остановка
+
+```bash
+# Остановить контейнеры (данные БД сохранятся)
+docker-compose down
+
+# Остановить и удалить данные БД
+docker-compose down -v
+```
+
+---
+
+### Сравнение режимов запуска
+
+| | Локально | Docker |
+|---|---|---|
+| БД | PostgreSQL на Mac | Контейнер `postgres:15` |
+| Имя базы | `JavaLearn` | `reservation_db` |
+| Хост БД | `localhost` | `db` (внутри Docker) |
+| Порт API | 8080 | 8080 |
+| Порт PostgreSQL | 5432 | 5433 (снаружи) |
 
 ---
 

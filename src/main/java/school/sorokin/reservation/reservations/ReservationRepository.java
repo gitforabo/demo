@@ -16,7 +16,6 @@ import org.springframework.data.repository.query.Param;
 //   ReservationEntity — тип сущности
 //   Long              — тип первичного ключа (id)
 public interface ReservationRepository extends JpaRepository<ReservationEntity, Long> {
-
     // ------ Изменить статус бронирования ------
     // @Modifying — указывает, что запрос изменяет данные (UPDATE/DELETE), а не читает их
     // Транзакция (@Transactional) должна быть обеспечена на уровне вызывающего сервиса

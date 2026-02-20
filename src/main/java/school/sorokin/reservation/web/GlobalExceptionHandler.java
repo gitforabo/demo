@@ -57,10 +57,8 @@ public class GlobalExceptionHandler {
 
     // ------ Обработка: неверные входные данные ------
     // IllegalArgumentException — бизнес-ошибка (например, endDate раньше startDate)
-    // IllegalStateException — ошибка состояния (например, нельзя изменить
-    // не-PENDING бронирование)
-    // MethodArgumentNotValidException — ошибка валидации аннотаций (@NotNull,
-    // @FutureOrPresent и т.д.)
+    // IllegalStateException — ошибка состояния (например, нельзя изменить не-PENDING бронирование)
+    // MethodArgumentNotValidException — ошибка валидации аннотаций (@NotNull, @FutureOrPresent и т.д.)
     // Все они → HTTP 400 Bad Request
     @ExceptionHandler(exception = {
             IllegalArgumentException.class,
