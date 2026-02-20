@@ -9,36 +9,17 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+// Репозиторий — слой доступа к данным (DAO).
+// Расширяет JpaRepository, который уже содержит готовые методы: save(), findById(), findAll(), delete() и т.д.
+// Spring Data JPA автоматически создаёт реализацию этого интерфейса — писать SQL вручную не нужно.
+// JpaRepository<ReservationEntity, Long>:
+//   ReservationEntity — тип сущности
+//   Long              — тип первичного ключа (id)
 public interface ReservationRepository extends JpaRepository<ReservationEntity, Long> {
-    
-    //    List<ReservationEntity> findAllByStatusIs(ReservationStatus status);
-//
-//    @Query(value = "select * from reservations r where r.status = :status", nativeQuery = true)
-//    List<ReservationEntity> findAllByStatusIs(ReservationStatus status);
-//
-//    @Query("select r from ReservationEntity r where r.roomId = :roomId")
-//    List<ReservationEntity> findAllByRoomId(@Param("roomId") Long roomId);
-//
-//    @Transactional
-//    @Modifying
-//    @Query("""
-//            update ReservationEntity r
-//            set r.userId = :userId,
-//                r.roomId = :roomId,
-//                r.startDate = :startDate,
-//                r.endDate = :endDate,
-//                r.status = :status
-//            where r.id = :id
-//            """)
-//    int updateAllFields(
-//            @Param("id") Long id,
-//            @Param("userId") Long userId,
-//            @Param("roomId") Long roomId,
-//            @Param("startDate") LocalDate startDate,
-//            @Param("endDate") LocalDate endDate,
-//            @Param("status") ReservationStatus status
-//    );
 
+    // ------ Изменить статус бронирования ------
+    // @Modifying — указывает, что запрос изменяет данные (UPDATE/DELETE), а не читает их
+    // Транзакция (@Transactional) должна быть обеспечена на уровне вызывающего сервиса
     @Modifying
     @Query("""
             update ReservationEntity r
@@ -47,34 +28,37 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
             """)
     void setStatus(
             @Param("id") Long id,
-            @Param("status") ReservationStatus reservationStatus
-    );
+            @Param("status") ReservationStatus reservationStatus);
 
-
+    // ------ Найти конфликтующие бронирования ------
+    // Выбирает id бронирований, которые пересекаются по дате с запрашиваемым периодом.
+    // Условие пересечения: startDate < r.endDate AND r.startDate < endDate
+    // (две даты пересекаются, если одна начинается раньше, чем заканчивается другая)
+    // r.roomId — поле сущности ReservationEntity (столбец в БД)
+    // :roomId — аргумент метода, переданный через @Param("roomId")
     @Query("""
-       SELECT r.id from ReservationEntity r
-            WHERE r.roomId = :roomId
-            AND :startDate < r.endDate
-            AND r.startDate < :endDate
-            AND r.status = :status
-       """)
+            SELECT r.id from ReservationEntity r
+                 WHERE r.roomId = :roomId
+                 AND :startDate < r.endDate
+                 AND r.startDate < :endDate
+                 AND r.status = :status
+            """)
     List<Long> findConflictReservationIds(
             @Param("roomId") Long roomId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
-            @Param("status") ReservationStatus status
-    );
-// r.roomId - сущность ReservationEntity. это поле в таблице (в базе данных)
-// :roomId - аргумент метода (@Param("roomId")). это значение, переданное в метод
+            @Param("status") ReservationStatus status);
 
-     @Query("""
-       SELECT r from ReservationEntity r
-            WHERE (:roomId IS NULL OR r.roomId = :roomId)
-            AND (:userId IS NULL OR r.userId = :userId)
-       """)
+    // ------ Поиск по фильтру с пагинацией ------
+    // (:roomId IS NULL OR r.roomId = :roomId) — если roomId не передан (null), фильтр по нему игнорируется
+    // Pageable — объект пагинации (номер страницы + размер), передаётся из сервиса
+    @Query("""
+            SELECT r from ReservationEntity r
+                 WHERE (:roomId IS NULL OR r.roomId = :roomId)
+                 AND (:userId IS NULL OR r.userId = :userId)
+            """)
     List<ReservationEntity> searchByFilter(
-        @Param("roomId") Long roomId,
-        @Param("userId") Long userId,
-        Pageable pageable
-    );
+            @Param("roomId") Long roomId,
+            @Param("userId") Long userId,
+            Pageable pageable);
 }

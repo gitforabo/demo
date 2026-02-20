@@ -1,10 +1,13 @@
 package school.sorokin.reservation.reservations;
 
+// Фильтр для поиска бронирований. Передаётся из контроллера в сервис.
+// record — неизменяемый класс-контейнер, автоматически генерирует геттеры, equals, hashCode, toString.
+// Все поля опциональны (могут быть null) — если поле не указано, оно не используется в фильтрации.
 public record ReservationSearchFilter(
-    Long roomId,
-    Long userId,
-    Integer pageSize,
-    Integer pageNumber
+        Long roomId, // фильтр по номеру комнаты (если null — не фильтруем по комнате)
+        Long userId, // фильтр по пользователю (если null — не фильтруем по пользователю)
+        Integer pageSize, // количество записей на странице (по умолчанию 10 в сервисе)
+        Integer pageNumber // номер страницы (начиная с 0)
 ) {
 
 }
